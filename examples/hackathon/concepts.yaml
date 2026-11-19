@@ -1,0 +1,261 @@
+# 写像 g の出力(定義 6.5)。概念の仕様 + 同期 + 対応表。
+# 規則: 概念の仕様(purpose / principle / state / actions)に、他の概念の名前・UI の語・技術の名前を書かない。
+#       概念どうしのつながりは、すべて syncs に書く。notes は検査の対象外。
+# 「OQ-n」は open-questions.yaml の未決事項への参照。
+status: draft   # 案 A のみ。分割・統合の別案は decisions.yaml に論点として残す
+
+concepts:
+  - name: Place
+    params: []
+    purpose: 運営が登録した場所(企画、駐車場)を、来場者がどんな場所があるかとして知れる
+    principle: >-
+      運営が場所の名前・種別・位置・説明を登録しておくと、来場者はその場所の一覧と個々の情報を見られる。
+    state: |
+      places: set Place
+      name: Place -> String
+      kind: Place -> {企画, 駐車場}
+      location: Place -> Point
+      description: Place -> String
+    actions:
+      - name: register
+        requires: location が与えられている
+        effects: 新しい Place を作り、name・kind・location・description を設定して返す
+      - name: update
+        requires: place が places に含まれる
+        effects: 指定された属性を更新する
+      - name: remove
+        requires: place が places に含まれる
+        effects: place を places から取り除く
+      - name: get
+        requires: place が places に含まれる
+        effects: その place の属性を返す
+      - name: list
+        requires: なし
+        effects: places 全体を返す
+    notes: >-
+      kind は場所の性質の違い(企画と駐車場)で、Labeling の種類(飲食、展示)とは別(OQ-3)。
+      Place は汎化の余地がある(Directory [Item] など)。P1 では汎化しない。
+
+  - name: Search
+    params: [Item]
+    purpose: 来場者が、名前の一部から目当ての項目を見つける
+    principle: >-
+      項目に検索用の文字列を登録しておくと、来場者がキーワードで問い合わせたとき、
+      文字列にキーワードを含む項目が返る。
+    state: |
+      text: Item -> String
+    actions:
+      - name: index
+        requires: なし
+        effects: item の検索用文字列を text に設定する(既にあれば置き換える)
+      - name: unindex
+        requires: item が text に含まれる
+        effects: item を text から取り除く
+      - name: query
+        requires: keyword が空でない
+        effects: text にキーワードを含む item の集合を返す。一致が無ければ空集合を返す
+    notes: 検索対象を名前だけにするか、説明や種別も含めるかは同期(index に渡す文字列)で決まる。概念は変えない。
+
+  - name: Labeling
+    params: [Item, Label]
+    purpose: 来場者が、項目を種類で絞って選べる
+    principle: >-
+      運営が種類を定め、項目に種類を付けておくと、来場者が種類を選んだとき、その種類の項目が返る。
+    state: |
+      labels: set Label
+      labeled: Item -> set Label
+    actions:
+      - name: define
+        requires: label が labels に含まれない
+        effects: label を labels に加える
+      - name: attach
+        requires: label が labels に含まれる
+        effects: item に label を付ける
+      - name: detach
+        requires: item に label が付いている
+        effects: item から label を外す
+      - name: release
+        requires: なし
+        effects: item に付いている label をすべて外す
+      - name: itemsWith
+        requires: label が labels に含まれる
+        effects: label が付いた item の集合を返す
+    notes: F4(optional)専用。F4 を外せばこの概念ごと要らなくなる(decisions D-001)。
+
+  - name: Position
+    params: []
+    purpose: 来場者が、自分がいま会場のどこにいるかを知る
+    principle: >-
+      来場者が位置の利用を許可すると、端末から得た位置が現在地として保たれ、更新される。
+    state: |
+      permission: {未確認, 許可, 拒否}
+      current: Point?
+      accuracy: Number?
+      takenAt: Time?
+    actions:
+      - name: request
+        requires: permission が 拒否 でない
+        effects: 位置の利用を求める。許可されれば permission を 許可 にする。拒否されれば 拒否 にする
+      - name: update
+        system: true
+        requires: permission が 許可
+        effects: 端末から得た位置・精度・時刻で current・accuracy・takenAt を更新する
+      - name: setManually
+        requires: point が与えられている
+        effects: current を point にし、accuracy を空にする(OQ-2)
+      - name: clear
+        requires: なし
+        effects: current・accuracy・takenAt を空にする
+    notes: 利用者ごとの状態で、他の利用者と共有しない。
+
+  - name: Destination
+    params: [Item]
+    purpose: 来場者が、向かう先を 1 つ決めて保つ
+    principle: >-
+      来場者が項目を 1 つ選ぶと、それが行き先として保たれ、選び直すか解除するまで変わらない。
+    state: |
+      chosen: Item?
+    actions:
+      - name: choose
+        requires: なし
+        effects: chosen を item にする(既にあれば置き換える)
+      - name: clear
+        requires: chosen が空でない
+        effects: chosen を空にする
+      - name: current
+        requires: なし
+        effects: chosen を返す(空なら空を返す)
+    notes: >-
+      経路(現在地と行き先を結ぶ直線)は状態を持たない計算なので、概念にしない(decisions D-003)。
+      Position.current と Destination.chosen の Place.location から、画面が方向と距離を導く。
+
+  - name: Congestion
+    params: [Item]
+    purpose: 来場者が、混んでいる場所を避けられる
+    principle: >-
+      誰かが項目の混み具合を報告すると、来場者はその項目の最新の混雑と、報告からの経過を見られる。
+      古くなった報告は、混雑が不明に戻る。
+    state: |
+      level: Item -> {空き, やや混雑, 混雑}
+      reportedAt: Item -> Time
+    actions:
+      - name: report
+        requires: level が 空き・やや混雑・混雑 のいずれか
+        effects: item の level を設定し、reportedAt を現在時刻にする(OQ-4)
+      - name: read
+        requires: なし
+        effects: item の level と reportedAt を返す。報告が無ければ「不明」を返す
+      - name: readAll
+        requires: なし
+        effects: level を持つ全項目の level と reportedAt を返す
+      - name: expire
+        system: true
+        requires: 現在時刻 - reportedAt が許容時間を超える(OQ-4)
+        effects: item を level・reportedAt から取り除く(不明に戻る)
+      - name: forget
+        requires: なし
+        effects: item を level・reportedAt から取り除く
+    notes: 段階数と許容時間は OQ-4。報告者を持たせるかは OQ-1 の結果で決める。
+
+syncs:
+  # ---- 要求を概念のアクションにつなぐ(Request は擬似的な概念。呼び出し元の権限は where に書く) ----
+  - name: list-places
+    when: Request.listPlaces
+    where: ""
+    then: Place.list
+
+  - name: show-place
+    when: Request.showPlace
+    where: ""
+    then: Place.get
+
+  - name: register-place
+    when: Request.registerPlace
+    where: 実行者が場所を管理できる   # OQ-1, OQ-5
+    then: Place.register
+
+  - name: search-places
+    when: Request.search
+    where: ""
+    then: Search.query
+
+  - name: browse-by-kind
+    when: Request.browseKind
+    where: ""
+    then: Labeling.itemsWith
+
+  - name: assign-label
+    when: Request.assignLabel
+    where: place が Place.places に含まれ、実行者が場所を管理できる   # OQ-1
+    then: Labeling.attach
+
+  - name: locate
+    when: Request.locate
+    where: ""
+    then: Position.request
+
+  - name: set-position
+    when: Request.setPosition
+    where: ""   # OQ-2
+    then: Position.setManually
+
+  - name: choose-destination
+    when: Request.chooseDestination
+    where: place が Place.places に含まれる
+    then: Destination.choose
+
+  - name: report-congestion
+    when: Request.reportCongestion
+    where: place が Place.places に含まれ、実行者が報告できる   # OQ-1
+    then: Congestion.report
+
+  - name: read-congestion
+    when: Request.readCongestion
+    where: ""
+    then: Congestion.read
+
+  # ---- 概念どうしの連動 ----
+  - name: register-indexes
+    when: Place.register
+    where: ""
+    then: Search.index
+
+  - name: update-reindexes
+    when: Place.update
+    where: name が更新された
+    then: Search.index
+
+  - name: remove-unindexes
+    when: Place.remove
+    where: ""
+    then: Search.unindex
+
+  - name: remove-releases-labels
+    when: Place.remove
+    where: ""
+    then: Labeling.release
+
+  - name: remove-forgets-congestion
+    when: Place.remove
+    where: ""
+    then: Congestion.forget
+
+  - name: remove-clears-destination
+    when: Place.remove
+    where: Destination.chosen が、取り除かれた place である
+    then: Destination.clear
+
+# 機能 × 概念・同期の対応表(定義 6.4)。空の行は実現されていない機能、空の列は使われない概念。
+trace:
+  - feature: F1
+    concepts: [Place, Search]
+    syncs: [list-places, show-place, register-place, search-places, register-indexes, update-reindexes, remove-unindexes]
+  - feature: F2
+    concepts: [Place, Position, Destination]
+    syncs: [locate, set-position, choose-destination, remove-clears-destination]
+  - feature: F3
+    concepts: [Place, Congestion]
+    syncs: [report-congestion, read-congestion, remove-forgets-congestion]
+  - feature: F4
+    concepts: [Place, Labeling]
+    syncs: [browse-by-kind, assign-label, remove-releases-labels]

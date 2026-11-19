@@ -1,0 +1,63 @@
+# 写像 g の入力(定義 5.4 のテンプレート)
+# 状態: 下書き。概念設計ボード(画像)の P1 案から起こした。画像は判読できない箇所があるため、
+# 推測した箇所には「★要確認」を付けてある。確認できたら ★ を外し、status を confirmed にする。
+status: draft
+
+problem:
+  domain: 大学祭(NUTfes)の会場での来場者の行動   # ★要確認
+  # 解決策から独立に書く(I6)。「地図」「アプリ」という語を入れない。
+  statement: >-
+    来場者は、行きたい企画や駐車場がどこにあるか、そこへどう行くか、いま混んでいるかを、
+    会場の中で手早く知る手段を持たない。
+  stakeholders:
+    - name: visitor
+      role: 来場者
+      impact: 目当ての場所を探す、向かう、混雑を避ける。会場に初めて来た人を含む   # ★要確認(初来場者中心か)
+    - name: organizer
+      role: 運営・出展者
+      impact: 場所の情報と混雑を把握している側。入力を担う可能性がある   # ★要確認(OQ-1)
+  evidence:
+    - ボードの課題グループ G1「行き先を探す」G2「移動中の位置と道」G3a「混み具合・営業の状況」   # 投票数は判読できず未転記
+
+# 機能は価値の単位(I1)。UI と技術を含めない(I3, I4)。optional: true は外して比べられる機能(I5)。
+features:
+  - id: F1
+    name: 行きたい場所を見つける
+    value: 来場者が、目当ての企画や駐車場を、名前の一部から探し出せる
+    stakeholders: [visitor]
+    scenario: 来場者が企画名の一部を入力すると、該当する場所の一覧が返り、1 つ選ぶとその場所の情報が分かる
+    optional: false
+
+  - id: F2
+    name: 行き先へ向かう
+    value: 来場者が、自分の現在地と行き先の位置関係をつかんで、迷わず向かえる
+    stakeholders: [visitor]
+    scenario: 来場者が行き先を 1 つ決めると、自分の現在地から行き先までの方向と距離が分かる
+    optional: false
+
+  - id: F3
+    name: 混雑を知る
+    value: 来場者が、混んでいる場所を知って、行く先や時間を選べる
+    stakeholders: [visitor, organizer]
+    scenario: 誰かが場所の混み具合を報告すると、来場者は場所ごとの最新の混雑を見られる   # ★要確認(誰が報告するか: OQ-1)
+    optional: false
+
+  - id: F4
+    name: 種類から選ぶ
+    value: 行き先が決まっていない来場者が、種類(飲食、展示など)から場所を選べる
+    stakeholders: [visitor]
+    scenario: 来場者が種類を選ぶと、その種類の場所の一覧が返る
+    optional: true   # ボードの「カテゴリ」。P1 で入れるか未確認(OQ-3)
+
+# g は使わない。後の写像(技術の選択、型構成)へそのまま渡す。
+passthrough:
+  scale: {}                       # ★未記入: 想定来場者数、同時接続
+  constraints:
+    deadline: 2週間                # ボードの「2週間で作れる範囲」から
+    team_size: null                # ★未記入(OQ-6)
+    judging_criteria: null         # ★未記入(OQ-6)
+  tech_preferences:
+    # ボードの P1 の記述から推測。確認前の値。
+    map: Leaflet または MapLibre   # ★要確認
+    data: JSON またはスプレッドシート   # ★要確認(OQ-5)
+    hosting: Cloudflare Pages など   # ★要確認

@@ -1,0 +1,48 @@
+# 設計上の課題の記録(問題 → 選択肢 → 採用案と理由)。写像の分割・統合の判断をここに残す。
+# 別案を捨てたときも理由を残す。後の写像から差し戻されたときに、同じ手順でやり直せるようにするため。
+decisions:
+  - id: D-001
+    problem: 種類で選ぶ振る舞い(Labeling)を、独立した概念にするか、Place の属性に畳むか
+    options:
+      - 独立した概念 Labeling [Item, Label]
+      - Place に category 属性を持たせる
+    adopted: 独立した概念(案 A)
+    reason: >-
+      目的が「種類で絞って選べる」で、場所を知る目的(Place)と別。混ぜると混同になる(分離)。
+      また F4 が optional なので、独立させておけば F4 を外すときに概念ごと外せる(I5)。
+    status: open   # OQ-3 の結果で、F4 ごと外れる可能性がある
+    derived_from: 6.1040 L04(分離・特定性)
+
+  - id: D-002
+    problem: キーワード検索を、Place の振る舞いに含めるか、独立した概念にするか
+    options:
+      - 独立した概念 Search [Item]
+      - Place.query として Place に含める
+    adopted: 独立した概念(案 A)
+    reason: >-
+      目的が「名前の一部から見つける」で、場所を知る目的と別。含めると Place が過負荷になる。
+      Search は Item の型を問わないので、汎用性もある。連動は同期(register-indexes)に出した。
+    status: open
+    derived_from: 6.1040 L04(特定性・汎用性)
+
+  - id: D-003
+    problem: 現在地から行き先への経路(P1 は直線)を、概念にするか
+    options:
+      - 概念にする(Route)
+      - 概念にしない。Position と Destination の値から画面が計算する
+    adopted: 概念にしない(案 A)
+    reason: >-
+      直線は状態を持たない計算で、保つべき状態も、アクションの事前条件も無い。
+      道なりの経路など、経路を保つ・選ぶ振る舞いが出てきたら Route を立てる。
+    status: open
+    derived_from: 6.1040 L02(状態の無いものは概念にならない)。資料内の明示は無く、資料外の判断
+
+  - id: D-004
+    problem: 地図表示を概念にするか
+    options:
+      - 概念にする(Map)
+      - 概念にしない
+    adopted: 概念にしない
+    reason: 地図は表現(UI)で、Place・Position・Congestion の状態を重ねて描く。表現に依存しない(定義 4 章)。
+    status: resolved
+    derived_from: 定義 4 章「UI に依存しない」

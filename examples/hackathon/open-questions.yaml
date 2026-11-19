@@ -1,0 +1,51 @@
+# 未決事項。ここが空にならない限り、blocks に挙げた段階は確定しない。
+# 決まったら status を resolved にし、answer と決めた日を書く。他のファイルの「OQ-n」参照は検査が突き合わせる。
+questions:
+  - id: OQ-1
+    question: 混雑の報告と場所の登録を、誰が、どの端末で、いつ行うか(運営のみか、出展者か、来場者の通報も含めるか)
+    blocks: [concepts.syncs, journey.F3, api.権限]
+    owner: チーム
+    status: open
+    answer: null
+
+  - id: OQ-2
+    question: GPS が取れないとき、現在地を手で指定する操作を P1 に入れるか
+    blocks: [concepts.Position, journey.F2]
+    owner: チーム
+    status: open
+    answer: null
+
+  - id: OQ-3
+    question: 種類(カテゴリ)で選ぶ F4 を P1 に入れるか。Place.kind(企画 / 駐車場)との線引きはどうするか
+    blocks: [concepts.Labeling, input.F4]
+    owner: チーム
+    status: open
+    answer: null
+
+  - id: OQ-4
+    question: 混雑の段階数(3 段階でよいか)と、報告が古いとみなす時間
+    blocks: [concepts.Congestion, journey.F3]
+    owner: チーム
+    status: open
+    answer: null
+
+  - id: OQ-5
+    question: 場所のデータをどう入れるか(運営が操作して登録するか、スプレッドシートから取り込むか)
+    blocks: [concepts.Place, api.登録系]
+    owner: チーム
+    status: open
+    answer: null
+
+  - id: OQ-6
+    question: ハッカソンの審査基準、デモの場面、チーム人数、想定来場者数
+    blocks: [criteria, input.passthrough]
+    owner: チーム
+    status: open
+    answer: null
+
+  - id: OQ-7
+    question: input.yaml の課題・機能 F1〜F4 は、ボードの P1 案と合っているか(画像から推測した下書き)
+    blocks: [input, concepts, journey, api]
+    owner: 作成者
+    status: open
+    answer: null
