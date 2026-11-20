@@ -49,6 +49,8 @@ input.yaml ──(人が判断)──▶ concepts.yaml ──derive──▶ jou
 - **「機能を足したい」**: `input.yaml` に機能を足す → `concepts.yaml` で、その機能を実現する概念と同期を決める(既存の概念で足りるか、新しい概念が要るか。目的が同じ概念だけを統合する)→ 判断を `decisions.yaml` に残す → `make lint`。
 - **「ジャーニーを書きたい」**: `make journey` で雛形を作り、TODO を埋める。始点・終点・失敗時の扱いは人が決める。
 - **「API の仕様を書きたい」**: `make api` の元表から `api/spec.md` を書く。権限や整合の扱いは、関係する未決事項が解決してから。
+- **「画面にまとめたい」「どの概念を同じ画面に入れる?」**: `docs/screen-grouping.md` に従う。`groups.yaml` を書き、`python3 tools/screen_groups.py groups.yaml` で候補を数える。製品に依存しない。実例は `examples/hackathon/groups.yaml`。
+- **「画面設計を進めたい」**: skill `screen-design`(6 ステップ)を使う。
 - **「未決事項は?」**: `make open`。決めるのはチームで、AI は決めない。
 
 ## 守ること

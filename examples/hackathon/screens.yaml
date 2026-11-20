@@ -1,0 +1,68 @@
+# 画面設計の成果物(skill screen-design)。6 ステップの成果が、ここに積み上がる。
+# status: proposed は作成者の案。チームの合意後に confirmed。
+# 実例として、ステップ 1〜4 までを、提案の形で埋めてある。理由に【推論】とあるものは、ジャーニーが未記入のため。
+status: proposed
+progress: {step: 4, done: [1, 2, 3]}
+
+# ステップ 1: 材料
+concepts: [Place, Search, Position, Destination, Congestion]
+shared: [Place]
+excluded:
+  - {concept: Labeling, reason: "未決 OQ-3(F4 を P1 に入れるか)"}
+excluded_actions:
+  - {action: Place.register, reason: "運営の操作。OQ-1・5 が決まるまで画面を作らない"}
+  - {action: Place.update, reason: "同上"}
+  - {action: Place.remove, reason: "同上"}
+  - {action: Congestion.report, reason: "報告者が未決(OQ-1)"}
+  - {action: Congestion.forget, reason: "運営の操作。OQ-1"}
+  - {action: Position.setManually, reason: "OQ-2(現在地を手で指定する操作を P1 に入れるか)"}
+  - {action: Search.index, reason: "同期 register-indexes が呼ぶ。利用者は呼ばない"}
+  - {action: Search.unindex, reason: "同期 remove-unindexes が呼ぶ"}
+
+limits:
+  max_concepts_per_screen: 3
+  max_actions_per_screen: 4
+  max_transitions_per_journey: 3
+
+# ステップ 3: 選んだ分け方(tools/screen_groups.py の案 2)
+screens:
+  - id: find
+    title: 場所を探す
+    concepts: [Search]
+    uses: [Place]
+    shows: [検索の入力欄, 見つかった場所の一覧]
+    actions:
+      - Search.query
+      - Place.list
+      - Place.get
+  - id: map
+    title: 地図で向かう
+    concepts: [Position, Destination, Congestion]
+    uses: [Place]
+    shows: [現在地と、いつの情報か, 行き先の方向と距離, 場所ごとの混雑の段階と時刻]
+    actions:
+      - {do: Position.request, undo: Position.clear}
+      - {do: Destination.choose, undo: Destination.clear}
+      - Destination.current
+      - Congestion.read
+      - Congestion.readAll
+      - Place.get
+
+# ステップ 4: ジャーニーの経路(F1〜F3 のみ。F4 は Labeling とともに未決)
+journeys:
+  - id: F1
+    goal: 名前の一部から、目当ての場所を見つける
+    steps:
+      - {screen: find, do: Search.query}
+      - {screen: find, do: Place.get}
+  - id: F2
+    goal: 行き先を決めて、向かう
+    steps:
+      - {screen: find, do: Search.query}
+      - {screen: map, do: Position.request}
+      - {screen: map, do: Destination.choose}
+  - id: F3
+    goal: 混んでいる場所を知る
+    steps:
+      - {screen: map, do: Congestion.readAll}
+      - {screen: map, do: Congestion.read}

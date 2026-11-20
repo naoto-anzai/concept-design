@@ -1,0 +1,21 @@
+# 概念を画面にまとめる分け方の入力(docs/screen-grouping.md)。
+# status: proposed は、作成者の案。チームの合意後に confirmed。
+# 理由は、ジャーニーの「同じ歩で同時に見るもの」を根拠にする。ジャーニーが未記入のところは【推論】。
+status: proposed
+
+concepts: [Place, Search, Position, Destination, Congestion]   # P1 に入れる概念。Labeling は OQ-3、運営まわりは OQ-1・5 で未決
+shared: [Place]    # 全機能が使う中心の概念。1 つの画面に閉じず、必要な画面に出す
+
+limits:
+  max_concepts_per_screen: 3   # 【推論】スマホの 1 画面で、概念を 3 つまでにする
+
+pairs:
+  - {a: Position, b: Destination, kind: must,
+     reason: "方向と距離は、現在地と行き先の両方から導く(concepts.yaml の Destination の notes)"}
+  - {a: Destination, b: Congestion, kind: prefer,
+     reason: "【推論】行き先の混雑を見て、行き先を選び直せるようにする"}
+  - {a: Search, b: Destination, kind: prefer,
+     reason: "【推論】検索結果から、そのまま行き先を選ぶ(同期 choose-destination)"}
+  - {a: Position, b: Congestion, kind: neutral}
+  - {a: Search, b: Position, kind: neutral}
+  - {a: Search, b: Congestion, kind: neutral}
